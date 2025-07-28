@@ -1,0 +1,86 @@
+---
+title: "AI Job Market Analysis"
+author: "Bryce Hamilton"
+date: "2025-07-25"
+output: html_document
+---
+
+```{r}
+# Load required libraries
+library(tidyverse)
+library(ggplot2)
+library(scales)# For formatting axes 
+# Load the dataset taken from kaggle
+ai_job_dataset <- read.csv("ai_job_dataset.csv")
+summary(ai_job_dataset)
+```
+
+```{r}
+#dropping the null values 
+df<- ai_job_dataset %>% drop_na()
+summary(df)
+head(df)
+str(df)
+```
+*Bar chart showing number of AI jobs by company location*
+```{r}
+p<-ggplot(df)
+ggplot(data = df, aes( x = after_stat(count), y = company_location)) +
+geom_bar(aes( fill = company_location)) + labs(title = "Job Count by Company Location", x = "Number of Jobs ", y = "Country") + 
+  theme (plot.title = element_text(size= 15, face = "bold",hjust = .5)) + 
+  #I didn't put a name because its it would have been repetitive
+  scale_fill_discrete(name = "") 
+##I chose a horizontal bar chart to display the number of AI jobs by country because it compares values across categories. It shows which countries have the highest number of AI jobs, and it highlights that certain locations dominate the AI job market. It was surpising that Germany companies leads the world in most ai jobs
+```
+
+
+*Boxplot showing salary distribution by industry*
+```{r}
+# A lot of people  industry type  can affect how much you earn but I made this visualization to show that there is no different when it comes to Ai jobs according tp the data I used there isn't much of a difference. 
+# I chose a box plot because it shows salary distributions, medians, and outliers within each industry.
+p <- ggplot(data = df, mapping = aes(x = industry, y = salary_usd))
+p + geom_boxplot(data = df, aes(fill = industry)) + labs(title= "Salaries by Industry", x = "Industries", y= "Salary (USD)") +
+  # making sure that the labels are in money form I tested different scales but this is the one that I thought looked and scaled the best.
+  scale_y_log10(labels = scales ::dollar) +
+  #This is how I was able to change the font of the of the title, x value, y- value and center the title.
+  theme (plot.title = element_text(size= 15, face = "bold",hjust = .5),
+         axis.title = element_text( face= "bold")) + scale_fill_discrete(name ="Industries")
+```
+*Histogram showing salary distribution by level of education*
+```{r}
+#I used a histogram to show how salaries are distributed across different education levels. It's an effective way to spot patterns and frequency of salary ranges.
+ggplot(df, mapping =aes(x = salary_usd, fill = education_required)) +
+  geom_histogram()+ scale_x_log10(labels = scales ::dollar) + labs(title = "Salaries Based on Level of Education", x= "Salary (USD)", y= "Number of People") + theme_classic()+
+theme (plot.title = element_text(size= 15, face = "bold",hjust = .5)) +
+      scale_fill_discrete(name = "Degrees")
+#From this dataset no degree guarantees high salary, but advanced degrees may shift the distribution slightly upward.
+```
+*Scatterplot with trend line showing relationship between experience and salary*
+```{r}
+#This is how the graph looked before grouping the data — as you can see, it doesn’t provide the most accurate representation.
+p<-ggplot(df, mapping =aes(x=years_experience, y = salary_usd))
+# I added the smooth funtion so that you can compare the two graph with each other and see the different that grouping and formating takes 
+p + geom_point() + geom_smooth( size= 2)+ scale_y_log10(labels = scales ::dollar) +
+  #creating the labels for each axis
+labs(title = "Salaries Based on Years of Experience", x = "Years of Experience", y= "Salary (USD)") +
+  theme(plot.title = element_text(size= 12, face = "bold",hjust = .5))
+#The smooth curve shows a generally increasing salary trend with more experience, though it levels off at higher experience levels.
+```
+
+*Calculate average salary by experience and company location*
+```{r}
+# I used this function to find to break up the graphs into different countries so i can find the mean for each country. I chose to do this because honestly I was running out of data.
+avg_salary_by_experience_years <- df %>% group_by(years_experience, company_location) %>%
+summarise(avg_salary=mean(salary_usd))
+# setting the graphs 
+p<- ggplot(data = avg_salary_by_experience_years, mapping = aes(x = years_experience, y =avg_salary, ))
+# Line chart faceted by company location
+p + geom_line() + facet_wrap(~company_location) + scale_y_log10(labels = scales ::dollar) + labs(title = "Average salary for each Company Location",x= "Years of Experience", y= "Salary (USD)") + theme_minimal()+ theme(plot.title = element_text(size=13, hjust = .55), 
+axis.title  = element_text( hjust = .5,face = "bold"))     
+# Some countries show steady growth in salary with experience, while others show flatter or inconsistent patterns.
+                                                   
+```                     
+ 
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
